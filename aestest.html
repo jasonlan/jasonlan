@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>AES 加解密示例</title>
+    <!-- 引入 CryptoJS 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 100px; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 5px; }
+        .button { padding: 10px 20px; margin: 10px 5px; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h2>AES 加解密示例 (ECB 模式, PKCS7Padding)</h2>
+    <label for="plaintext">明文 / 密文：</label>
+    <textarea id="plaintext" placeholder="请输入明文或密文"></textarea>
+    
+    <label for="key">密钥 (将被处理为16字节)：</label>
+    <input type="password" id="key" placeholder="请输入密钥">
+    
+    <br>
+    <button class="button" onclick="doEncrypt()">加密</button>
+    <button class="button" onclick="doDecrypt()">解密</button>
+    
+    <h3>结果：</h3>
+    <div id="result"></div>
+    
+    <script>
+        // 将用户输入的密钥处理为16字符（不足右补零，多余截取前16字符）
+        function getKey(key) {
+            if (key.length < 16) {
+                key = key.padEnd(16, '\0');
+            } else if (key.length > 16) {
+                key = key.substring(0, 16);
+            }
+            return CryptoJS.enc.Utf8.parse(key);
+        }
+        
+        // 加密函数：返回 Base64 编码的密文
+        function encrypt(plainText, key) {
+            var keyWA = getKey(key);
+            var encrypted = CryptoJS.AES.encrypt(plainText, keyWA, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            return encrypted.toString();
+        }
+        
+        // 解密函数：返回解密后的明文
+        function decrypt(cipherText, key) {
+            var keyWA = getKey(key);
+            var decrypted = CryptoJS.AES.decrypt(cipherText, keyWA, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+        
+        // 点击加密按钮时调用
+        function doEncrypt() {
+            var plaintext = document.getElementById("plaintext").value;
+            var key = document.getElementById("key").value;
+            if (!plaintext || !key) {
+                alert("请输入明文和密钥");
+                return;
+            }
+            var encryptedText = encrypt(plaintext, key);
+            document.getElementById("result").innerText = "加密结果 (Base64): " + encryptedText;
+        }
+        
+        // 点击解密按钮时调用
+        function doDecrypt() {
+            var cipherText = document.getElementById("plaintext").value;
+            var key = document.getElementById("key").value;
+            if (!cipherText || !key) {
+                alert("请输入密文和密钥");
+                return;
+            }
+            try {
+                var decryptedText = decrypt(cipherText, key);
+                document.getElementById("result").innerText = "解密结果: " + decryptedText;
+            } catch (e) {
+                document.getElementById("result").innerText = "解密失败，请检查密文和密钥是否正确。";
+            }
+        }
+    </script>
+</body>
+</html>
